@@ -1,6 +1,7 @@
 version: "3"
 
 services:
+
   front-end:
     build: front-end/
     ports:
@@ -11,6 +12,7 @@ services:
     # uncomment for development
     volumes:
       - "./front-end/app:/var/www/html"
+      
   messaging:
 
   back-end:
