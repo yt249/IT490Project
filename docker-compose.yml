@@ -1,15 +1,8 @@
 version: "3"
 
 services:
-#  front-end:
-#    build: .
-#    ports:
-#      - "8080:80"
-#    environment:
-#      - RABBITMQ_USER=${USER}
-#      - RABBITMQ_PASS=${PASS}
-#    volumes:
-#      - "./app:/var/www/html"
+  front-end:
+
   messaging:
     image: rabbitmq:3.8-management
     environment:
