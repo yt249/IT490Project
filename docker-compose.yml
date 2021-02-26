@@ -1,25 +1,49 @@
-version: "3"
-
+version: '3'
 services:
-
-  front-end:
-    build: front-end/
-    ports:
-      - "8080:80"
-    environment:
-      - RABBITMQ_USER=${USER}
-      - RABBITMQ_PASS=${PASS}
-    # uncomment for development
-    volumes:
-      - "./front-end/app:/var/www/html"
-  messaging:
-    image: rabbitmq:3.8-management
-    environment:
-      - RABBITMQ_DEFAULT_USER=${USER}
-      - RABBITMQ_DEFAULT_PASS=${PASS}
-  back-end:
-    build: back-end/
-    environment:
-      - RABBITMQ_DEFAULT_USER=${USER}
-      - RABBITMQ_DEFAULT_PASS=${PASS}
-#  db:	
+    # tag::messaging[]
+    messaging:
+        image: 'rabbitmq:3-management'
+        environment:
+            RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+            RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+            RABBITMQ_ERLANG_COOKIE: ${RABBITMQ_ERLANG_COOKIE}
+        ports:
+            - 15672:15672
+    # end::messaging[]
+    # tag::adminer[]
+    adminer:
+        image: 'adminer'
+        ports:
+            - 8080:8080
+    # end::adminer[]
+    # tag::db[]
+    db:
+        build: ./db
+        environment:
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+        volumes:
+            - data-volume:/var/lib/postgresql/data
+    # end::db[]
+    # tag::front-end[]
+    front-end:
+        build: ./front-end
+        ports:
+            - 5000:5000
+        environment:
+            RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+            RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+            FLASK_ENV: development
+            FLASK_SECRET_KEY: ${FLASK_SECRET_KEY}
+        volumes:
+            - "./front_end:/app"
+    # end::front-end[]
+    # tag::back-end[]
+    back-end:
+        build: ./back-end
+        environment:
+            RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+            RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    # end::back-end[]
+volumes:
+    data-volume:
