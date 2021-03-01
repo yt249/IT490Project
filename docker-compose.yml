@@ -34,8 +34,6 @@ services:
             RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
             FLASK_ENV: development
             FLASK_SECRET_KEY: ${FLASK_SECRET_KEY}
-        volumes:
-            - "./front_end:/app"
     # end::front-end[]
     # tag::back-end[]
     back-end:
