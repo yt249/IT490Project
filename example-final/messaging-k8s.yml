@@ -1,0 +1,123 @@
+#tag::rbac[]
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: messaging
+
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: Role
+metadata:
+  name: rabbitmq-peer-discovery-rbac
+rules:
+  - apiGroups: [""]
+    resources: ["endpoints"]
+    verbs: ["get", "list"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+  name: rabbitmq-peer-discovery-rbac
+subjects:
+  - kind: ServiceAccount
+    name: messaging
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: rabbitmq-peer-discovery-rbac
+#end::rbac[]
+
+#tag::configmap[]
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rabbitmq-config
+data:
+  enabled_plugins: |
+    [rabbitmq_management,rabbitmq_peer_discovery_k8s].
+  rabbitmq.conf: |
+    cluster_formation.peer_discovery_backend  = rabbit_peer_discovery_k8s
+    cluster_formation.k8s.host = kubernetes.default.svc.cluster.local
+    cluster_formation.k8s.address_type = hostname
+    cluster_formation.node_cleanup.interval = 30
+    cluster_formation.node_cleanup.only_log_warning = true
+    cluster_partition_handling = autoheal
+    queue_master_locator=min-masters
+    loopback_users.guest = false
+#end::configmap[]
+
+#tag::service[]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: messaging
+  labels:
+    app: messaging
+spec:
+  selector:
+    app: messaging
+  ports:
+    - name: amqp
+      protocol: TCP
+      port: 5672
+    - name: http
+      protocol: TCP
+      port: 15672
+#end::service[]
+
+#tag::statefulset[]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: messaging
+  labels:
+    app: messaging
+spec:
+  serviceName: messaging
+  replicas: 3
+  selector:
+    matchLabels:
+      app: messaging
+  template:
+    metadata:
+      labels:
+        app: messaging
+    spec:
+      serviceAccountName: messaging
+      containers:
+        - name: rabbitmq
+          image: rabbitmq:3.8.3-management
+          env:
+            - name: MY_POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+            - name: RABBITMQ_USE_LONGNAME
+              value: "true"
+            - name: K8S_SERVICE_NAME
+              value: messaging
+            - name: K8S_HOSTNAME_SUFFIX
+              value: .messaging.default.svc.cluster.local
+            - name: RABBITMQ_NODENAME
+              value: rabbit@$(MY_POD_NAME).messaging.default.svc.cluster.local
+            - name: RABBITMQ_ERLANG_COOKIE
+              value: "changeme"
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/rabbitmq
+      volumes:
+        - name: config-volume
+          configMap:
+            name: rabbitmq-config
+            items:
+              - key: rabbitmq.conf
+                path: rabbitmq.conf
+              - key: enabled_plugins
+                path: enabled_plugins
+#end::statefulset[]
