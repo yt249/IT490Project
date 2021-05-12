@@ -1,0 +1,1 @@
+### Please navigate to “example-final” directory to run `kubectl apply -f .`  for grading final deliverables

@@ -24,9 +24,9 @@ services:
         volumes:
             - data-volume:/var/lib/postgresql/data
     # end::db[]
-    # tag::front-end[]
-    front-end:
-        build: ./front-end
+    # tag::front_end[]
+    front_end:
+        build: ./front_end
         ports:
             - 5000:5000
         environment:
@@ -34,14 +34,14 @@ services:
             RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
             FLASK_ENV: development
             FLASK_SECRET_KEY: ${FLASK_SECRET_KEY}
-    # end::front-end[]
-    # tag::back-end[]
-    back-end:
-        build: ./back-end
+    # end::front_end[]
+    # tag::back_end[]
+    back_end:
+        build: ./back_end
         environment:
             RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
             RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
             POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    # end::back-end[]
+    # end::back_end[]
 volumes:
     data-volume:
